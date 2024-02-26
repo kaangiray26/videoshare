@@ -25,7 +25,7 @@
                     </div>
                 </div>
                 <div v-if="state.loaded && peer && !state.connected" class="d-flex bg-light rounded mb-3">
-                    <div class="d-flex flex-column flex-fill bg-light overflow-scroll rounded px-2 py-1">
+                    <div class="d-flex flex-column flex-fill bg-light rounded px-2 py-1">
                         <span class="text-muted">Session</span>
                         <span class="text-dark text-nowrap">{{ peer.id }}</span>
                     </div>
@@ -112,7 +112,7 @@ async function handle_call(call) {
     call.answer();
     call.on('stream', async (remoteStream) => {
         // Set video events
-        set_video_events();
+        await add_video_events();
 
         // Set video source
         video.value.srcObject = remoteStream;
@@ -123,12 +123,16 @@ async function handle_call(call) {
 async function handle_data(data) {
     // Video events
     if (data.type == "pause") {
-        video.value.pause();
+        await remove_video_events();
+        await video.value.pause();
+        await add_video_events();
         return
     }
 
     if (data.type == "play") {
-        video.value.play();
+        await remove_video_events();
+        await video.value.play();
+        await add_video_events();
         return
     }
 
@@ -155,18 +159,23 @@ async function handle_data(data) {
     }
 }
 
-async function set_video_events() {
-    video.value.onplay = async () => {
+async function add_video_events() {
+    video.value.onplay = () => {
         conn.value.send({
             type: "play",
         })
     }
 
-    video.value.onpause = async () => {
+    video.value.onpause = () => {
         conn.value.send({
             type: "pause",
         })
     }
+}
+
+async function remove_video_events() {
+    video.value.onplay = null;
+    video.value.onpause = null;
 }
 
 async function handleFileUpload(event) {
@@ -190,7 +199,7 @@ async function handleFileUpload(event) {
         const url = URL.createObjectURL(blob);
 
         // Set video events
-        set_video_events();
+        await add_video_events();
 
         // Set video source
         video.value.src = url;
