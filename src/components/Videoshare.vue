@@ -111,11 +111,12 @@ async function handle_call(call) {
     })
     call.answer();
     call.on('stream', async (remoteStream) => {
-        video.value.srcObject = remoteStream;
-        video.value.play();
-
         // Set video events
         set_video_events();
+
+        // Set video source
+        video.value.srcObject = remoteStream;
+        video.value.load();
     });
 }
 
@@ -183,12 +184,17 @@ async function handleFileUpload(event) {
     reader.onload = async (event) => {
         // Set the file as the stream for peerjs call
         const res = event.target.result;
-        const blob = new Blob([new Uint8Array(res)]);
+
+        // Convert to data url
+        const blob = new Blob([new Uint8Array(res)], { type: file.type });
         const url = URL.createObjectURL(blob);
-        video.value.src = url;
 
         // Set video events
         set_video_events();
+
+        // Set video source
+        video.value.src = url;
+        video.value.load();
 
         // Get stream
         stream.value = video.value.mozCaptureStream ? video.value.mozCaptureStream() : video.value.captureStream();
@@ -205,7 +211,22 @@ async function handleFileUpload(event) {
 
 onMounted(() => {
     // Set peer
-    peer.value = new Peer([crypto.randomUUID()]);
+    peer.value = new Peer([crypto.randomUUID()], {
+        config: {
+            iceServers: [
+                {
+                    urls: "turn:standard.relay.metered.ca:80",
+                    username: "77397e46d75792651d01f384",
+                    credential: "c74eQOt8hmYsKfAN",
+                },
+                {
+                    urls: "turn:standard.relay.metered.ca:443",
+                    username: "77397e46d75792651d01f384",
+                    credential: "c74eQOt8hmYsKfAN",
+                },
+            ]
+        }
+    });
     peer.value.on('open', handle_open);
     peer.value.on('connection', handle_connection);
     peer.value.on('call', handle_call);
