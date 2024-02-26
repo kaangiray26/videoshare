@@ -38,9 +38,6 @@
                     </div>
                 </div>
                 <video v-show="state.connected" ref="video" class="shadow" controls loop></video>
-                <div v-if="controls && !state.streaming" class="d-flex justify-content-end mt-3">
-                    <button class="btn btn-primary" @click="make_call">Stream</button>
-                </div>
             </div>
         </div>
     </div>
@@ -71,7 +68,6 @@ const state = ref({
 })
 
 async function make_call() {
-    call.value = peer.value.call(state.value.connected_to, stream.value);
 }
 
 async function shareSession() {
@@ -103,6 +99,7 @@ async function handle_connection(connection) {
     controls.value = true;
     conn.value = connection;
     conn.value.on('data', handle_data);
+    call.value = peer.value.call(state.value.connected_to, stream.value);
 }
 
 async function handle_call(call) {
